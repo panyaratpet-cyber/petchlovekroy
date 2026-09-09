@@ -1,0 +1,204 @@
+ import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const BobaApp());
+}
+
+class BobaApp extends StatelessWidget {
+  const BobaApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Boba Order App',
+      theme: ThemeData(
+        primarySwatch: Colors.brown,
+        useMaterial3: true,
+      ),
+      home: const OrderScreen(),
+    );
+  }
+}
+
+class OrderScreen extends StatefulWidget {
+  const OrderScreen({super.key});
+
+  @override
+  State<OrderScreen> createState() => _OrderScreenState();
+}
+
+class _OrderScreenState extends State<OrderScreen> {
+  // ราคาเริ่มต้น
+  int basePrice = 50;
+
+  // ค่าการเลือกระดับความหวาน
+  String selectedSweetness = '100%';
+  final List<String> sweetnessLevels = ['0%', '25%', '50%', '75%', '100%'];
+
+  // ค่าการเลือกท็อปปิ้ง
+  final Map<String, int> toppings = {
+    'ไข่มุก (Boba)': 10,
+    'พุดดิ้งดิ้ง (Pudding)': 15,
+    'ว่านหางจระเข้ (Aloe Vera)': 15,
+    'เยลลี่บราวน์ชูการ์ (Jelly)': 10,
+  };
+  
+  final Map<String, bool> selectedToppings = {
+    'ไข่มุก (Boba)': false,
+    'พุดดิ้งดิ้ง (Pudding)': false,
+    'ว่านหางจระเข้ (Aloe Vera)': false,
+    'เยลลี่บราวน์ชูการ์ (Jelly)': false,
+  };
+
+  // คำนวณราคารวม
+  int get totalPrice {
+    int total = basePrice;
+    selectedToppings.forEach((topping, isSelected) {
+      if (isSelected) {
+        total += toppings[topping]!;
+      }
+    });
+    return total;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('สั่งชานมไข่มุก'),
+        backgroundColor: Colors.brown[300],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAlignment.start,
+          children: [
+            // รูปภาพและชื่อเมนู
+            Center(
+              child: Column(
+                children: [
+                  Container(
+                    height: 150,
+                    width: 150,
+                    decoration: BoxDecoration(
+                      color: Colors.brown[100],
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.local_drink, size: 80, color: Colors.brown),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'ชานมไต้หวันต้นตำรับ',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  Text('ราคาเริ่มต้น $basePrice บาท', style: const TextStyle(color: Colors.grey)),
+                ],
+              ),
+            ),
+            const Divider(height: 30),
+
+            // เลือกระดับความหวาน
+            const Text(
+              'ระดับความหวาน (Sweetness)',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8.0,
+              children: sweetnessLevels.map((level) {
+                return ChoiceChip(
+                  label: Text(level),
+                  selected: selectedSweetness == level,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        selectedSweetness = level;
+                      });
+                    }
+                  },
+                );
+              }).toList(),
+            ),
+            const Divider(height: 30),
+
+            // เลือกท็อปปิ้ง
+            const Text(
+              'เพิ่มท็อปปิ้ง (Toppings)',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Column(
+              children: toppings.keys.map((topping) {
+                return CheckboxListTile(
+                  title: Text(topping),
+                  subtitle: Text('+${toppings[topping]} บาท'),
+                  value: selectedToppings[topping],
+                  onChanged: (bool? value) {
+                    setState(() {
+                      selectedToppings[topping] = value ?? false;
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+
+      // แถบสรุปราคาและปุ่มกดสั่ง
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            )
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainbetweenAlignment,
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAlignment.start,
+              children: [
+                const Text('ราคารวม', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                Text(
+                  '฿$totalPrice',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.brown),
+                ),
+              ],
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.brown,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              ),
+              onPressed: () {
+                // แสดง Dialog เมื่อกดสั่งซื้อ
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('ยืนยันออเดอร์'),
+                    content: Text('ชานมไต้หวัน\nความหวาน: $selectedSweetness\nราคารวม: $totalPrice บาท'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('ตกลง'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              child: const Text('ใส่ตะกร้า', style: TextStyle(fontSize: 18, color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
