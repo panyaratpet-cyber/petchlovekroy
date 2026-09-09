@@ -1,204 +1,83 @@
- import 'package:flutter/material.dart';
+import streamlit as st
+import pandas as pd
+from datetime import datetime
 
-void main() {
-  runApp(const BobaApp());
-}
+# ตั้งค่าหน้าตาของเว็บ
+st.set_page_config(
+    page_title="ร้านชานมไข่มุก - Boba Shop",
+    page_icon="🧋",
+    layout="centered"
+)
 
-class BobaApp extends StatelessWidget {
-  const BobaApp({super.key});
+# หัวข้อหลัก
+st.title("🧋 ร้านชานมไข่มุก (Boba Order App)")
+st.subheader("สั่งชานมสดใหม่ได้ง่ายๆ ผ่านเว็บ")
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Boba Order App',
-      theme: ThemeData(
-        primarySwatch: Colors.brown,
-        useMaterial3: true,
-      ),
-      home: const OrderScreen(),
-    );
-  }
-}
+st.divider()
 
-class OrderScreen extends StatefulWidget {
-  const OrderScreen({super.key});
+# ----------------- ส่วนที่ 1: เลือกเมนูและปรับแต่ง -----------------
+st.header("1. เลือกรายการเครื่องดื่ม")
 
-  @override
-  State<OrderScreen> createState() => _OrderScreenState();
-}
+# รูปภาพประกอบเมนู
+st.image("https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=600&q=80", caption="ชานมไต้หวันพรีเมียม", use_container_width=True)
 
-class _OrderScreenState extends State<OrderScreen> {
-  // ราคาเริ่มต้น
-  int basePrice = 50;
+# ราคาเริ่มต้น
+base_price = 50
+st.write(f"**ราคาเริ่มต้น:** {base_price} บาท")
 
-  // ค่าการเลือกระดับความหวาน
-  String selectedSweetness = '100%';
-  final List<String> sweetnessLevels = ['0%', '25%', '50%', '75%', '100%'];
+# เลือกระดับความหวาน
+sweetness = st.select_slider(
+    "ระดับความหวาน (Sweetness):",
+    options=["0%", "25%", "50%", "75%", "100%"],
+    value="100%"
+)
 
-  // ค่าการเลือกท็อปปิ้ง
-  final Map<String, int> toppings = {
-    'ไข่มุก (Boba)': 10,
-    'พุดดิ้งดิ้ง (Pudding)': 15,
-    'ว่านหางจระเข้ (Aloe Vera)': 15,
-    'เยลลี่บราวน์ชูการ์ (Jelly)': 10,
-  };
-  
-  final Map<String, bool> selectedToppings = {
-    'ไข่มุก (Boba)': false,
-    'พุดดิ้งดิ้ง (Pudding)': false,
-    'ว่านหางจระเข้ (Aloe Vera)': false,
-    'เยลลี่บราวน์ชูการ์ (Jelly)': false,
-  };
+# เลือกท็อปปิ้ง
+st.write("**เลือกท็อปปิ้งเพิ่มเติม:**")
+toppings_price = 0
 
-  // คำนวณราคารวม
-  int get totalPrice {
-    int total = basePrice;
-    selectedToppings.forEach((topping, isSelected) {
-      if (isSelected) {
-        total += toppings[topping]!;
-      }
-    });
-    return total;
-  }
+col1, col2 = st.columns(2)
+with col1:
+    boba = st.checkbox("ไข่มุกบราวน์ชูการ์ (+10 บาท)")
+    pudding = st.checkbox("พุดดิ้งนมสด (+15 บาท)")
+with col2:
+    jelly = st.checkbox("เฉาก๊วย (+10 บาท)")
+    aloe = st.checkbox("ว่านหางจระเข้ (+15 บาท)")
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('สั่งชานมไข่มุก'),
-        backgroundColor: Colors.brown[300],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAlignment.start,
-          children: [
-            // รูปภาพและชื่อเมนู
-            Center(
-              child: Column(
-                children: [
-                  Container(
-                    height: 150,
-                    width: 150,
-                    decoration: BoxDecoration(
-                      color: Colors.brown[100],
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.local_drink, size: 80, color: Colors.brown),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'ชานมไต้หวันต้นตำรับ',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  Text('ราคาเริ่มต้น $basePrice บาท', style: const TextStyle(color: Colors.grey)),
-                ],
-              ),
-            ),
-            const Divider(height: 30),
+# คำนวณราคา
+selected_toppings = []
+if boba:
+    toppings_price += 10
+    selected_toppings.append("ไข่มุกบราวน์ชูการ์")
+if pudding:
+    toppings_price += 15
+    selected_toppings.append("พุดดิ้งนมสด")
+if jelly:
+    toppings_price += 10
+    selected_toppings.append("เฉาก๊วย")
+if aloe:
+    toppings_price += 15
+    selected_toppings.append("ว่านหางจระเข้")
 
-            // เลือกระดับความหวาน
-            const Text(
-              'ระดับความหวาน (Sweetness)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8.0,
-              children: sweetnessLevels.map((level) {
-                return ChoiceChip(
-                  label: Text(level),
-                  selected: selectedSweetness == level,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        selectedSweetness = level;
-                      });
-                    }
-                  },
-                );
-              }).toList(),
-            ),
-            const Divider(height: 30),
+total_price = base_price + toppings_price
 
-            // เลือกท็อปปิ้ง
-            const Text(
-              'เพิ่มท็อปปิ้ง (Toppings)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Column(
-              children: toppings.keys.map((topping) {
-                return CheckboxListTile(
-                  title: Text(topping),
-                  subtitle: Text('+${toppings[topping]} บาท'),
-                  value: selectedToppings[topping],
-                  onChanged: (bool? value) {
-                    setState(() {
-                      selectedToppings[topping] = value ?? false;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
+st.divider()
 
-      // แถบสรุปราคาและปุ่มกดสั่ง
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            )
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainbetweenAlignment,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAlignment.start,
-              children: [
-                const Text('ราคารวม', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                Text(
-                  '฿$totalPrice',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.brown),
-                ),
-              ],
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.brown,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-              onPressed: () {
-                // แสดง Dialog เมื่อกดสั่งซื้อ
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('ยืนยันออเดอร์'),
-                    content: Text('ชานมไต้หวัน\nความหวาน: $selectedSweetness\nราคารวม: $totalPrice บาท'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('ตกลง'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-              child: const Text('ใส่ตะกร้า', style: TextStyle(fontSize: 18, color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+# ----------------- ส่วนที่ 2: สรุปออเดอร์และบันทึกข้อมูล -----------------
+st.header("2. สรุปรายการสั่งซื้อ")
+
+# แสดงราคารวม
+st.metric(label="ราคารวมสุทธิ", value=f"{total_price} บาท")
+
+# ปุ่มกดสั่งซื้อ
+if st.button("🛒 ยืนยันการสั่งซื้อ", type="primary", use_container_width=True):
+    # บันทึกข้อมูลออเดอร์ลงระบบ
+    order_data = {
+        "เวลา": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "ความหวาน": sweetness,
+        "ท็อปปิ้ง": ", ".join(selected_toppings) if selected_toppings else "ไม่ใส่",
+        "ราคารวม": f"{total_price} บาท"
+    }
+    
+    st.success("🎉 บันทึกออเดอร์เรียบร้อยแล้ว!")
+    st.json(order_data) # แสดงสรุปออเดอร์เป็น JSON
