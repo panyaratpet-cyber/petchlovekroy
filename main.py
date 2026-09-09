@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 from datetime import datetime
 
 # ตั้งค่าหน้าตาของเว็บ
@@ -10,20 +9,45 @@ st.set_page_config(
 )
 
 # หัวข้อหลัก
-st.title("🧋 ร้านชานมไข่มุก (Boba Order App)")
-st.subheader("สั่งชานมสดใหม่ได้ง่ายๆ ผ่านเว็บ")
+st.title("🧋 ร้านชานมไข่มุก (Boba Order)")
+st.caption("สั่งง่าย ชงสดใหม่ทุกแก้ว")
 
 st.divider()
 
-# ----------------- ส่วนที่ 1: เลือกเมนูและปรับแต่ง -----------------
-st.header("1. เลือกรายการเครื่องดื่ม")
+# ----------------- ส่วนที่ 1: เลือกเมนูเครื่องดื่ม -----------------
+st.header("1. เลือกเมนูเครื่องดื่ม")
 
-# รูปภาพประกอบเมนู
-st.image("https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=600&q=80", caption="ชานมไต้หวันพรีเมียม", use_container_width=True)
+# รายการเมนูพร้อมราคา และสถานะแนะนำ
+menu_list = {
+    "ชานมไต้หวันต้นตำรับ (แนะนำ ⭐)": {"price": 50, "recommended": True},
+    "ชานมบราวน์ชูการ์ (แนะนำ ⭐)": {"price": 60, "recommended": True},
+    "ชาไทยพรีเมียม": {"price": 45, "recommended": False},
+    "ชาเขียวมัทฉะนมสด": {"price": 55, "recommended": False},
+    "ชามะลิใส": {"price": 40, "recommended": False},
+}
 
-# ราคาเริ่มต้น
-base_price = 50
-st.write(f"**ราคาเริ่มต้น:** {base_price} บาท")
+# แสดงโซนเมนูแนะนำ
+st.subheader("🔥 เมนูแนะนำ")
+rec_cols = st.columns(2)
+col_idx = 0
+for name, details in menu_list.items():
+    if details["recommended"]:
+        with rec_cols[col_idx % 2]:
+            st.info(f"**{name}**\n\nราคา {details['price']} บาท")
+        col_idx += 1
+
+# ตัวเลือกเมนูแบบ Dropdown/Radio
+selected_menu_name = st.radio(
+    "เลือกเมนูที่ต้องการสั่ง:",
+    options=list(menu_list.keys())
+)
+
+base_price = menu_list[selected_menu_name]["price"]
+
+st.divider()
+
+# ----------------- ส่วนที่ 2: ปรับแต่งเครื่องดื่ม -----------------
+st.header("2. ปรับแต่งระดับความหวาน & ท็อปปิ้ง")
 
 # เลือกระดับความหวาน
 sweetness = st.select_slider(
@@ -32,52 +56,47 @@ sweetness = st.select_slider(
     value="100%"
 )
 
-# เลือกท็อปปิ้ง
-st.write("**เลือกท็อปปิ้งเพิ่มเติม:**")
-toppings_price = 0
+# รายการท็อปปิ้งพร้อมราคา
+toppings_data = {
+    "ไข่มุกบราวน์ชูการ์ (+10฿)": 10,
+    "พุดดิ้งนมสด (+15฿)": 15,
+    "เฉาก๊วย (+10฿)": 10,
+    "ว่านหางจระเข้ (+15฿)": 15,
+    "วิปครีม (+20฿)": 20,
+}
 
-col1, col2 = st.columns(2)
-with col1:
-    boba = st.checkbox("ไข่มุกบราวน์ชูการ์ (+10 บาท)")
-    pudding = st.checkbox("พุดดิ้งนมสด (+15 บาท)")
-with col2:
-    jelly = st.checkbox("เฉาก๊วย (+10 บาท)")
-    aloe = st.checkbox("ว่านหางจระเข้ (+15 บาท)")
+# ให้เลือกท็อปปิ้งได้หลายรายการพร้อมกัน
+selected_toppings = st.multiselect(
+    "เลือกท็อปปิ้ง (เลือกได้หลายอย่าง):",
+    options=list(toppings_data.keys()),
+    placeholder="เลือกท็อปปิ้งที่ต้องการ..."
+)
 
-# คำนวณราคา
-selected_toppings = []
-if boba:
-    toppings_price += 10
-    selected_toppings.append("ไข่มุกบราวน์ชูการ์")
-if pudding:
-    toppings_price += 15
-    selected_toppings.append("พุดดิ้งนมสด")
-if jelly:
-    toppings_price += 10
-    selected_toppings.append("เฉาก๊วย")
-if aloe:
-    toppings_price += 15
-    selected_toppings.append("ว่านหางจระเข้")
-
+# คำนวณราคาท็อปปิ้ง
+toppings_price = sum(toppings_data[t] for t in selected_toppings)
 total_price = base_price + toppings_price
 
 st.divider()
 
-# ----------------- ส่วนที่ 2: สรุปออเดอร์และบันทึกข้อมูล -----------------
-st.header("2. สรุปรายการสั่งซื้อ")
+# ----------------- ส่วนที่ 3: สรุปออเดอร์และบันทึก -----------------
+st.header("3. สรุปรายการสั่งซื้อ")
 
-# แสดงราคารวม
+# แสดงรายละเอียด
+st.write(f"**เมนูที่เลือก:** {selected_menu_name}")
+st.write(f"**ระดับความหวาน:** {sweetness}")
+st.write(f"**ท็อปปิ้ง:** {', '.join(selected_toppings) if selected_toppings else 'ไม่ใส่ท็อปปิ้ง'}")
+
 st.metric(label="ราคารวมสุทธิ", value=f"{total_price} บาท")
 
-# ปุ่มกดสั่งซื้อ
+# ปุ่มยืนยันการสั่งซื้อ
 if st.button("🛒 ยืนยันการสั่งซื้อ", type="primary", use_container_width=True):
-    # บันทึกข้อมูลออเดอร์ลงระบบ
-    order_data = {
+    order_summary = {
         "เวลา": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "เมนู": selected_menu_name,
         "ความหวาน": sweetness,
         "ท็อปปิ้ง": ", ".join(selected_toppings) if selected_toppings else "ไม่ใส่",
         "ราคารวม": f"{total_price} บาท"
     }
     
     st.success("🎉 บันทึกออเดอร์เรียบร้อยแล้ว!")
-    st.json(order_data) # แสดงสรุปออเดอร์เป็น JSON
+    st.json(order_summary)
